@@ -95,39 +95,24 @@ gratia::draw(gam_model5)
 # PCA on all traits #
 traits <- df[, c("Elytra.length", "Elytra.width", "Pronotum.length", 
                  "Pronotum.width", "Head.length", "Eye.distance")]
-# Remove any rows with missing NA values before running PCA, 
-# otherwise prcomp() will throw an error.
 complete_cases <- complete.cases(traits)
 traits_clean <- traits[complete_cases, ]
 
-# 2. CREATE A BIOLOGICAL FILTER 
-# We remove the 0s and filter out obvious data entry errors.
-# (Adjust these maximums/minimums if you have specific biological cutoffs)
-valid_rows <- apply(traits_clean, 1, function(row) {
-  all(row > 0) &&                # Must be strictly greater than 0
-    row["Elytra.length"] > 3 &&    # Removes the 0.7mm errors
-    row["Elytra.width"] < 20 &&    # Removes the 81mm errors
-    row["Pronotum.length"] < 20 && # Removes the 57mm errors
-    row["Pronotum.width"] < 20     # Removes the 52mm errors
-})
+# 2. RUN THE PCA
+pca_result <- prcomp(log(traits_clean), center = TRUE, scale. = TRUE)
 
-# Apply filter
-traits_valid <- traits_clean[valid_rows, ]
-
-# 3. RUN THE PCA (This will work perfectly now!)
-pca_result <- prcomp(log(traits_valid), center = TRUE, scale. = TRUE)
-
-# 4. View the results
+# 3. View the results
 summary(pca_result)
 print(pca_result$rotation)
 
+# 4. Initialize your new columns in the main dataframe with NA
 df$Size_PC1 <- NA
 df$Shape_PC2 <- NA
 
-# Multiply PC1 by -1 so that positive values = larger body size
-df$Size_PC1[valid_rows] <- pca_result$x[, 1] * -1 
-# Leave PC2 exactly as it is
-df$Shape_PC2[valid_rows] <- pca_result$x[, 2]
+# 5. Insert the PCA scores directly using complete_cases
+# (Multiply PC1 by -1 so positive values = larger body size)
+df$Size_PC1[complete_cases] <- pca_result$x[, 1] * -1
+df$Shape_PC2[complete_cases] <- pca_result$x[, 2]
 
 gam_model6 <- gam(Size_PC1 ~ 
                     Sex * Anthro_numeric +
