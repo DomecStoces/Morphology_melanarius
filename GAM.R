@@ -10,8 +10,9 @@ df$Habitat.type <- as.factor(df$Habitat.type)
 df$Sex <- as.factor(df$Sex)
 df$Anthro_numeric <- 5 - df$Anthropogen
 df$Anthro_numeric <- as.numeric(df$Anthro_numeric)
+table(Original = df$Anthropogen, Reversed = df$Anthro_numeric)
 
-# Model fit - visualize whether the male and female size curves diverge or converge as you move from rural (1) to urban (4)
+# Environmental drivers - visualize whether the male and female size curves diverge or converge as you move from rural (1) to urban (4) #
 gam_model <- gam(Elytra.legth ~ Sex + 
                    s(Anthro_numeric, by = Sex, k = 5) +
                    s(Region, bs = "re"), 
@@ -39,3 +40,28 @@ summary(gam_model2)
 gam.check(gam_model2)
 concurvity(gam_model2, full = TRUE)
 gratia::draw(gam_model2)
+
+# Allometric scaling between sexes #
+library(lmodel2)
+library(dplyr)
+library(tidyr)
+df_rma <- df %>%
+  filter(!is.na(Sex), !is.na(Elytra.legth)) %>% 
+  group_by(Region, Anthro_numeric, Sex) %>%
+  summarise(mean_elytra = mean(Elytra.legth), .groups = "drop") %>%
+  pivot_wider(names_from = Sex, values_from = mean_elytra) %>%
+  drop_na(M, F) %>%
+  mutate(
+    log_male = log(M),
+    log_female = log(F)
+  )
+
+# Run the RMA II model
+rma_model <- lmodel2(log_male ~ log_female, 
+                     data = df_rma, 
+                     range.y = "relative", 
+                     range.x = "relative", 
+                     nperm = 1000)
+
+# 4. View the results
+print(rma_model)
