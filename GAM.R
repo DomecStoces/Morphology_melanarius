@@ -11,8 +11,9 @@ df$Sex <- as.factor(df$Sex)
 df$Anthro_numeric <- 5 - df$Anthropogen
 df$Anthro_numeric <- as.numeric(df$Anthro_numeric)
 
-# Model fit
-gam_model <- gam(Elytra.length ~ s(Anthro_numeric, k = 3) + Sex + 
+# Model fit - visualize whether the male and female size curves diverge or converge as you move from rural (1) to urban (4)
+gam_model <- gam(Elytra.length ~ Sex + 
+                   s(Anthro_numeric, by = Sex, k = 3) + 
                    s(Region, bs = "re"), 
                  data = df, 
                  method = "REML")
