@@ -12,10 +12,15 @@ df$Anthro_numeric <- 5 - df$Anthropogen
 df$Anthro_numeric <- as.numeric(df$Anthro_numeric)
 
 # Model fit - visualize whether the male and female size curves diverge or converge as you move from rural (1) to urban (4)
-gam_model <- gam(Elytra.length ~ Sex + 
-                   s(Anthro_numeric, by = Sex, k = 3) + 
+gam_model <- gam(Elytra.legth ~ Sex + 
+                   s(Anthro_numeric, by = Sex, k = 5) +
                    s(Region, bs = "re"), 
-                 data = df, 
+                 data = df, family=gaussian(link="identity"),
+                 method = "REML")
+
+gam_model <- gam(Elytra.legth ~ Sex*Anthro_numeric + 
+                   s(Region, bs = "re"), 
+                 data = df, family=gaussian(link="identity"),
                  method = "REML")
 
 summary(gam_model)
@@ -25,3 +30,12 @@ gam.check(gam_model)
 concurvity(gam_model, full = TRUE)
 gratia::draw(gam_model)
 plot(gam_model, select = 2)
+
+df$Anthro_numeric1 <- factor(df$Anthro_numeric)
+gam_model2 <- gam(Elytra.legth ~ Sex * Anthro_numeric1 +
+                    s(Region, bs = "re"),
+                  data = df, method = "REML")
+summary(gam_model2)
+gam.check(gam_model2)
+concurvity(gam_model2, full = TRUE)
+gratia::draw(gam_model2)
