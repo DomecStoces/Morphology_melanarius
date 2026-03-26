@@ -56,8 +56,6 @@ rma_model <- lmodel2(log_male ~ log_female,
                      range.y = "relative", 
                      range.x = "relative", 
                      nperm = 1000)
-
-# 4. View the results
 print(rma_model)
 
 # When accounting for allometric scaling of body size, everything would be larger #
@@ -71,10 +69,11 @@ summary(gam_model3)
 gam.check(gam_model3)
 concurvity(gam_model3, full = TRUE)
 gratia::draw(gam_model3)
+
 # Do males and females scale differently with size?
-gam_model4 <- gam(Head.length ~ 
+gam_model4 <- gam(Pronotum.width ~ 
                    Sex * Anthro_numeric +
-                   Sex * log(Elytra.legth) +
+                   Sex * log(Elytra.length) +
                    s(Region, bs = "re"), family=gaussian(link="identity"),
                  data = df, method = "REML")
 summary(gam_model4)
@@ -137,23 +136,29 @@ library(ggeffects)
 library(ggplot2)
 predicted_shape <- ggpredict(gam_model7, terms = c("Anthro_numeric", "Sex"))
 d<-ggplot() +
-  # 1. RAW DATA (Background Layer): Add jittered points from the original 'df'
+  # 1. raw data: Add jittered points from the original 'df'
   geom_jitter(data = df, 
               aes(x = Anthro_numeric, y = Shape_PC2, color = Sex), 
-              width = 0.15, height = 0, # Only shake horizontally, preserve true Y value
-              alpha = 0.15, size = 1) + # Low opacity so the lines stay visible
+              width = 0.15, height = 0, 
+              alpha = 0.15, size = 1, na.rm = TRUE) + 
   
-  # 2. CONFIDENCE INTERVALS (Middle Layer): From 'predicted_shape'
+  # 2. CONFIDENCE INTERVALS (Middle Layer)
   geom_ribbon(data = predicted_shape, 
               aes(x = x, ymin = conf.low, ymax = conf.high, fill = group), 
               alpha = 0.3) +
   
-  # 3. PREDICTED TREND LINES (Top Layer): From 'predicted_shape'
+  # 3. PREDICTED TREND LINES (Top Layer)
   geom_line(data = predicted_shape, 
             aes(x = x, y = predicted, color = group), 
             linewidth = 1.2) +
   
-  # 4. COLORS & THEMING
+  # 4. CUSTOM X-AXIS LABELS (New addition here!)
+  scale_x_continuous(
+    breaks = c(1, 2, 3, 4), 
+    labels = c("Rural = 1", "Agrolandscape = 2", "Suburban = 3", "Urban = 4")
+  ) +
+  
+  # 5. COLORS & THEMING
   scale_color_manual(values = c("F" = "red", "M" = "blue")) + 
   scale_fill_manual(values = c("F" = "red", "M" = "blue")) +
   labs(
@@ -165,6 +170,17 @@ d<-ggplot() +
   theme_classic() +
   theme(
     text = element_text(size = 14),
-    legend.position = "top"
+    legend.position = "right"
   )
 d
+
+ggsave(
+  filename = "Body_shape_gam7.tiff", 
+  plot = d,                              
+  device = "tiff",                       
+  width = 8,                             
+  height = 6,                            
+  units = "in",                          
+  dpi = 600,                             
+  compression = "lzw"                    
+)
