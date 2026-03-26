@@ -131,3 +131,40 @@ summary(gam_model7)
 gam.check(gam_model7)
 concurvity(gam_model7, full = TRUE)
 gratia::draw(gam_model7)
+
+# Graphical vizualization of gam_model7 #
+library(ggeffects)
+library(ggplot2)
+predicted_shape <- ggpredict(gam_model7, terms = c("Anthro_numeric", "Sex"))
+d<-ggplot() +
+  # 1. RAW DATA (Background Layer): Add jittered points from the original 'df'
+  geom_jitter(data = df, 
+              aes(x = Anthro_numeric, y = Shape_PC2, color = Sex), 
+              width = 0.15, height = 0, # Only shake horizontally, preserve true Y value
+              alpha = 0.15, size = 1) + # Low opacity so the lines stay visible
+  
+  # 2. CONFIDENCE INTERVALS (Middle Layer): From 'predicted_shape'
+  geom_ribbon(data = predicted_shape, 
+              aes(x = x, ymin = conf.low, ymax = conf.high, fill = group), 
+              alpha = 0.3) +
+  
+  # 3. PREDICTED TREND LINES (Top Layer): From 'predicted_shape'
+  geom_line(data = predicted_shape, 
+            aes(x = x, y = predicted, color = group), 
+            linewidth = 1.2) +
+  
+  # 4. COLORS & THEMING
+  scale_color_manual(values = c("F" = "red", "M" = "blue")) + 
+  scale_fill_manual(values = c("F" = "red", "M" = "blue")) +
+  labs(
+    x = "Anthropogenic gradient",
+    y = "Body shape (PC2 score)",
+    color = "Sex",
+    fill = "Sex"
+  ) +
+  theme_classic() +
+  theme(
+    text = element_text(size = 14),
+    legend.position = "top"
+  )
+d
