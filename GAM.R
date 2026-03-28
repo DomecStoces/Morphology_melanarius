@@ -84,8 +84,9 @@ gratia::draw(gam_model4)
 # Does allometry change along urban gradient?
 gam_model5 <- gam(Head.length ~ 
                    Sex * Anthro_numeric +
-                   log(Elytra.legth) * Anthro_numeric +
-                   s(Region, bs = "re"),
+                   log(Elytra.length) * Anthro_numeric +
+                   s(Region, bs = "re"), weights = Predicted.sex, 
+                   family=gaussian(link="identity"),
                  data = df, method = "REML")
 summary(gam_model5)
 gam.check(gam_model5)
@@ -114,10 +115,16 @@ df$Shape_PC2 <- NA
 df$Size_PC1[complete_cases] <- pca_result$x[, 1] * -1
 df$Shape_PC2[complete_cases] <- pca_result$x[, 2]
 
+# Removing outliers
+outliers <- subset(df, Shape_PC2 < -4)
+print(outliers[, c("Elytra.length", "Elytra.width", "Pronotum.length", 
+                   "Pronotum.width", "Head.length", "Eye.distance")])
+df_filtered <- subset(df, Shape_PC2 >= -4)
+
 gam_model6 <- gam(Size_PC1 ~ 
                     Sex * Anthro_numeric +
-                    s(Region, bs = "re"),
-                  data = df, method = "REML")
+                    s(Region, bs = "re"), weights = Predicted.sex,
+                  data = df_filtered, method = "REML")
 summary(gam_model6)
 gam.check(gam_model6)
 concurvity(gam_model6, full = TRUE)
@@ -125,12 +132,13 @@ gratia::draw(gam_model6)
 
 gam_model7 <- gam(Shape_PC2 ~ 
                     Sex * Anthro_numeric +
-                    s(Region, bs = "re"),
-                  data = df, method = "REML")
+                    s(Region, bs = "re"), weights = Predicted.sex,
+                  data = df_filtered, method = "REML")
 summary(gam_model7)
 gam.check(gam_model7)
 concurvity(gam_model7, full = TRUE)
 gratia::draw(gam_model7)
+
 
 # Graphical vizualization of gam_model7 #
 library(ggeffects)
@@ -138,7 +146,7 @@ library(ggplot2)
 predicted_shape <- ggpredict(gam_model7, terms = c("Anthro_numeric", "Sex"))
 d<-ggplot() +
   # 1. raw data: Add jittered points from the original 'df'
-  geom_jitter(data = df, 
+  geom_jitter(data = df_filtered, 
               aes(x = Anthro_numeric, y = Shape_PC2, color = Sex), 
               width = 0.15, height = 0, 
               alpha = 0.15, size = 1, na.rm = TRUE) + 
