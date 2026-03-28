@@ -119,12 +119,37 @@ df$Shape_PC2[complete_cases] <- pca_result$x[, 2]
 outliers <- subset(df, Shape_PC2 < -4)
 print(outliers[, c("Elytra.length", "Elytra.width", "Pronotum.length", 
                    "Pronotum.width", "Head.length", "Eye.distance")])
-df_filtered <- df %>%
-  filter(abs(scale(Size_PC1)) <= 3.5 & abs(scale(Shape_PC2)) <= 3.5)
 
+# Filters out any row where PC1 OR PC2 is more than 3.5 SDs from the mean
+df_filtered <- df %>%
+  filter(abs(as.numeric(scale(Size_PC1))) <= 3.5 & 
+           abs(as.numeric(scale(Shape_PC2))) <= 3.5)
+
+# IQR range method for outlier detection #
+Q1_PC2 <- quantile(df$Shape_PC2, 0.25, na.rm = TRUE)
+Q3_PC2 <- quantile(df$Shape_PC2, 0.75, na.rm = TRUE)
+IQR_PC2 <- IQR(df$Shape_PC2, na.rm = TRUE)
+
+lower_extreme_PC2 <- Q1_PC2 - 3 * IQR_PC2
+upper_extreme_PC2 <- Q3_PC2 + 3 * IQR_PC2
+
+print(paste("PC2 Extreme Bounds:", round(lower_extreme_PC2, 2), "to", round(upper_extreme_PC2, 2)))
+Q1_PC1 <- quantile(df$Size_PC1, 0.25, na.rm = TRUE)
+Q3_PC1 <- quantile(df$Size_PC1, 0.75, na.rm = TRUE)
+IQR_PC1 <- IQR(df$Size_PC1, na.rm = TRUE)
+
+lower_extreme_PC1 <- Q1_PC1 - 3 * IQR_PC1
+upper_extreme_PC1 <- Q3_PC1 + 3 * IQR_PC1
+
+print(paste("PC1 Extreme Bounds:", round(lower_extreme_PC1, 2), "to", round(upper_extreme_PC1, 2)))
+df_filtered <- df %>%
+  filter(Size_PC1 >= lower_extreme_PC1 & Size_PC1 <= upper_extreme_PC1 &
+           Shape_PC2 >= lower_extreme_PC2 & Shape_PC2 <= upper_extreme_PC2)
+
+# Model fits #
 gam_model6 <- gam(Size_PC1 ~ 
-                    Sex * Anthro_numeric +
-                    s(Region, bs = "re"), weights = Predicted.sex,
+                    Sex * Anthro_numeric + Habitat.type +
+                    s(Region, bs = "re"), weights = Predicted.sex, family=gaussian(link="identity"),
                   data = df_filtered, method = "REML")
 summary(gam_model6)
 gam.check(gam_model6)
@@ -132,14 +157,24 @@ concurvity(gam_model6, full = TRUE)
 gratia::draw(gam_model6)
 
 gam_model7 <- gam(Shape_PC2 ~ 
-                    Sex * Anthro_numeric +
-                    s(Region, bs = "re"), weights = Predicted.sex,
+                    Sex * Anthro_numeric + Habitat.type +
+                    s(Region, bs = "re"), weights = Predicted.sex, family=gaussian(link="identity"),
                   data = df_filtered, method = "REML")
 summary(gam_model7)
 gam.check(gam_model7)
 concurvity(gam_model7, full = TRUE)
 gratia::draw(gam_model7)
 
+gam_model_spatial <- gam(Size_PC1 ~ Sex * Anthro_numeric + 
+                           Habitat.type + 
+                           s(X, Y, k = 11),              
+                         weights = Predicted.sex, 
+                         family = gaussian(link="identity"),
+                         data = df_filtered, 
+                         method = "REML")
+
+summary(gam_model_spatial)
+gratia::draw(gam_model_spatial, select = "s(X,Y)")
 
 # Graphical vizualization of gam_model7 #
 library(ggeffects)
@@ -207,8 +242,30 @@ rma_model_size <- lmodel2(M ~ F,
                           range.y = "interval", 
                           range.x = "interval", 
                           nperm = 1000)
-
 print(rma_model_size)
+library(ggplot2)
+
+# Extract the RMA intercept and slope from the lmodel2 object
+rma_res_size <- rma_model_size$regression.results
+rma_int_size <- rma_res_size[rma_res_size$Method == "RMA", "Intercept"]
+rma_slope_size <- rma_res_size[rma_res_size$Method == "RMA", "Slope"]
+
+# Create the plot
+plot_size <- ggplot(df_rma_pca, aes(x = F, y = M)) +
+  geom_point(size = 3, alpha = 0.7, color = "black") + # Plot the population means
+  geom_abline(intercept = rma_int_size, slope = rma_slope_size, 
+              color = "blue", linewidth = 1.2) + # The fitted RMA line
+  geom_abline(intercept = 0, slope = 1, 
+              linetype = "dashed", color = "red", linewidth = 1) + # The 1:1 Isometry line
+  labs(title = "Allometric Scaling of Body Size (PC1)",
+       subtitle = "Blue line = RMA regression; Red dashed line = 1:1 Isometry",
+       x = "Female Mean Size (PC1)",
+       y = "Male Mean Size (PC1)") +
+  theme_classic(base_size = 14) +
+  theme(plot.title = element_text(face = "bold"))
+
+print(plot_size)
+
 # RMA II model on PCA shape component #
 df_rma_shape <- df_filtered %>%
   filter(!is.na(Sex), !is.na(Shape_PC2)) %>% 
@@ -223,3 +280,23 @@ rma_model_shape <- lmodel2(M ~ F,
                            nperm = 1000)
 
 print(rma_model_shape)
+# Extract the RMA intercept and slope from the shape model
+rma_res_shape <- rma_model_shape$regression.results
+rma_int_shape <- rma_res_shape[rma_res_shape$Method == "RMA", "Intercept"]
+rma_slope_shape <- rma_res_shape[rma_res_shape$Method == "RMA", "Slope"]
+
+# Create the plot
+plot_shape <- ggplot(df_rma_shape, aes(x = F, y = M)) +
+  geom_point(size = 3, alpha = 0.7, color = "black") + 
+  geom_abline(intercept = rma_int_shape, slope = rma_slope_shape, 
+              color = "blue", linewidth = 1.2) + # The fitted RMA line
+  geom_abline(intercept = 0, slope = 1, 
+              linetype = "dashed", color = "red", linewidth = 1) + # The 1:1 Isometry line
+  labs(title = "Allometric Scaling of Body Shape (PC2)",
+       subtitle = "Blue line = RMA regression; Red dashed line = 1:1 Isometry",
+       x = "Female Mean Shape (PC2)",
+       y = "Male Mean Shape (PC2)") +
+  theme_classic(base_size = 14) +
+  theme(plot.title = element_text(face = "bold"))
+
+print(plot_shape)
