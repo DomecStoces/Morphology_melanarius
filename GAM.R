@@ -11,11 +11,7 @@ df$Sex <- as.factor(df$Sex)
 df$Anthro_numeric <- 5 - df$Anthropogen
 df$Anthro_numeric <- as.numeric(df$Anthro_numeric)
 table(Original = df$Anthropogen, Reversed = df$Anthro_numeric)
-# Confidence score or the probability of the assigned class, needs converting
-df$Prob_Male <- ifelse(df$Sex == "M", 
-                       df$Predicted.sex,        
-                       1 - df$Predicted.sex)    
-
+# Predicted.sex comes from Random Forest probability, recommendation to use them as weights
 
 # Environmental drivers - visualize whether the male and female size curves diverge or converge as you move from rural (1) to urban (4) #
 gam_model <- gam(Elytra.legth ~ Sex*Anthro_numeric + 
