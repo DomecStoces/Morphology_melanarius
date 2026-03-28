@@ -4,13 +4,18 @@ library(stringr)
 library(dplyr)
 
 # Uploading file with data and setting factors
-df <- read_excel("initial data_DS.xlsx", sheet = "6_melanarius_data")
+df <- read_excel("initial data_DS1.xlsx", sheet = "6_melanarius_data")
 df$Region <- as.factor(df$Region)
 df$Habitat.type <- as.factor(df$Habitat.type)
 df$Sex <- as.factor(df$Sex)
 df$Anthro_numeric <- 5 - df$Anthropogen
 df$Anthro_numeric <- as.numeric(df$Anthro_numeric)
 table(Original = df$Anthropogen, Reversed = df$Anthro_numeric)
+# Confidence score or the probability of the assigned class, needs converting
+df$Prob_Male <- ifelse(df$Sex == "M", 
+                       df$Predicted.sex,        
+                       1 - df$Predicted.sex)    
+
 
 # Environmental drivers - visualize whether the male and female size curves diverge or converge as you move from rural (1) to urban (4) #
 gam_model <- gam(Elytra.legth ~ Sex*Anthro_numeric + 
