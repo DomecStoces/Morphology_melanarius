@@ -14,9 +14,9 @@ table(Original = df$Anthropogen, Reversed = df$Anthro_numeric)
 # Predicted.sex comes from Random Forest probability, recommendation to use them as weights
 
 # Environmental drivers - visualize whether the male and female size curves diverge or converge as you move from rural (1) to urban (4) #
-gam_model <- gam(Elytra.legth ~ Sex*Anthro_numeric + 
+gam_model <- gam(Elytra.length ~ Sex*Anthro_numeric + 
                    s(Region, bs = "re"), 
-                 data = df, family=gaussian(link="identity"),
+                 data = df, weights = Predicted.sex, family=gaussian(link="identity"),
                  method = "REML")
 
 summary(gam_model)
@@ -28,8 +28,8 @@ gratia::draw(gam_model)
 plot(gam_model, select = 2)
 
 df$Anthro_numeric1 <- factor(df$Anthro_numeric)
-gam_model2 <- gam(Elytra.legth ~ Sex * Anthro_numeric1 +
-                    s(Region, bs = "re"),
+gam_model2 <- gam(Elytra.length ~ Sex * Anthro_numeric1 + Habitat.type +
+                    s(Region, bs = "re"), weights = Predicted.sex, family=gaussian(link="identity"), 
                   data = df, method = "REML")
 summary(gam_model2)
 gam.check(gam_model2)
@@ -41,9 +41,9 @@ library(lmodel2)
 library(dplyr)
 library(tidyr)
 df_rma <- df %>%
-  filter(!is.na(Sex), !is.na(Elytra.legth)) %>% 
+  filter(!is.na(Sex), !is.na(Elytra.length)) %>% 
   group_by(Region, Anthro_numeric, Sex) %>%
-  summarise(mean_elytra = mean(Elytra.legth), .groups = "drop") %>%
+  summarise(mean_elytra = mean(Elytra.length), .groups = "drop") %>%
   pivot_wider(names_from = Sex, values_from = mean_elytra) %>%
   drop_na(M, F) %>%
   mutate(
@@ -61,10 +61,10 @@ print(rma_model)
 
 # When accounting for allometric scaling of body size, everything would be larger #
 # Include body size as covariate
-gam_model3 <- gam(Head.length ~ 
+gam_model3 <- gam(Pronotum.length ~ 
                    Sex * Anthro_numeric +
-                   log(Elytra.legth) +
-                   s(Region, bs = "re"), family=gaussian(link="identity"),
+                   log(Elytra.length) +
+                   s(Region, bs = "re"), weights = Predicted.sex, family=gaussian(link="identity"),
                  data = df, method = "REML")
 summary(gam_model3)
 gam.check(gam_model3)
@@ -75,14 +75,14 @@ gratia::draw(gam_model3)
 gam_model4 <- gam(Pronotum.width ~ 
                    Sex * Anthro_numeric +
                    Sex * log(Elytra.length) +
-                   s(Region, bs = "re"), family=gaussian(link="identity"),
+                   s(Region, bs = "re"), weights = Predicted.sex, family=gaussian(link="identity"),
                  data = df, method = "REML")
 summary(gam_model4)
 gam.check(gam_model4)
 concurvity(gam_model4, full = TRUE)
 gratia::draw(gam_model4)
 # Does allometry change along urban gradient?
-gam_model5 <- gam(Head.length ~ 
+gam_model5 <- gam(Eye.distance ~ 
                    Sex * Anthro_numeric +
                    log(Elytra.length) * Anthro_numeric +
                    s(Region, bs = "re"), weights = Predicted.sex, 
@@ -119,7 +119,8 @@ df$Shape_PC2[complete_cases] <- pca_result$x[, 2]
 outliers <- subset(df, Shape_PC2 < -4)
 print(outliers[, c("Elytra.length", "Elytra.width", "Pronotum.length", 
                    "Pronotum.width", "Head.length", "Eye.distance")])
-df_filtered <- subset(df, Shape_PC2 >= -4)
+df_filtered <- df %>%
+  filter(abs(scale(Size_PC1)) <= 3.5 & abs(scale(Shape_PC2)) <= 3.5)
 
 gam_model6 <- gam(Size_PC1 ~ 
                     Sex * Anthro_numeric +
@@ -193,3 +194,32 @@ ggsave(
   dpi = 600,                             
   compression = "lzw"                    
 )
+
+# RMA II model on PCA size component #
+df_rma_pca <- df_filtered %>%
+  filter(!is.na(Sex), !is.na(Size_PC1)) %>% 
+  group_by(Region, Anthro_numeric, Sex) %>%
+  summarise(mean_size = mean(Size_PC1), .groups = "drop") %>%
+  pivot_wider(names_from = Sex, values_from = mean_size) %>%
+  drop_na(M, F)
+rma_model_size <- lmodel2(M ~ F, 
+                          data = df_rma_pca, 
+                          range.y = "interval", 
+                          range.x = "interval", 
+                          nperm = 1000)
+
+print(rma_model_size)
+# RMA II model on PCA shape component #
+df_rma_shape <- df_filtered %>%
+  filter(!is.na(Sex), !is.na(Shape_PC2)) %>% 
+  group_by(Region, Anthro_numeric, Sex) %>%
+  summarise(mean_shape = mean(Shape_PC2), .groups = "drop") %>%
+  pivot_wider(names_from = Sex, values_from = mean_shape) %>%
+  drop_na(M, F)
+rma_model_shape <- lmodel2(M ~ F, 
+                           data = df_rma_shape, 
+                           range.y = "interval", 
+                           range.x = "interval",  
+                           nperm = 1000)
+
+print(rma_model_shape)
