@@ -154,6 +154,7 @@ summary(gam_model6)
 gam.check(gam_model6)
 concurvity(gam_model6, full = TRUE)
 gratia::draw(gam_model6)
+appraise(gam_model6)
 
 gam_model7 <- gam(Shape_PC2 ~ 
                     Sex * Anthro_numeric1 + 
@@ -163,6 +164,7 @@ summary(gam_model7)
 gam.check(gam_model7)
 concurvity(gam_model7, full = TRUE)
 gratia::draw(gam_model7)
+appraise(gam_model7)
 
 gam_model_spatial <- gam(Size_PC1 ~ Sex * Anthro_numeric + 
                            s(X, Y, k = 5),              
