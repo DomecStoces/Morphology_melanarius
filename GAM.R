@@ -231,6 +231,7 @@ ggsave(
 )
 
 # RMA II model on PCA size component #
+# Do populations with larger females also have larger males?
 df_rma_pca <- df_filtered %>%
   filter(!is.na(Sex), !is.na(Size_PC1)) %>% 
   group_by(Region, Anthro_numeric, Sex) %>%
@@ -243,7 +244,6 @@ rma_model_size <- lmodel2(M ~ F,
                           range.x = "interval", 
                           nperm = 1000)
 print(rma_model_size)
-library(ggplot2)
 
 # Extract the RMA intercept and slope from the lmodel2 object
 rma_res_size <- rma_model_size$regression.results
@@ -252,7 +252,7 @@ rma_slope_size <- rma_res_size[rma_res_size$Method == "RMA", "Slope"]
 
 # Create the plot
 plot_size <- ggplot(df_rma_pca, aes(x = F, y = M)) +
-  geom_point(size = 3, alpha = 0.7, color = "black") + # Plot the population means
+  geom_point(size = 3, alpha = 0.7, color = "black") + 
   geom_abline(intercept = rma_int_size, slope = rma_slope_size, 
               color = "blue", linewidth = 1.2) + # The fitted RMA line
   geom_abline(intercept = 0, slope = 1, 
