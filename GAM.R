@@ -94,6 +94,10 @@ concurvity(gam_model5, full = TRUE)
 gratia::draw(gam_model5)
 
 # PCA on all traits #
+# Removing the Agrolandscape category
+df <- df %>%
+  filter(Anthro_numeric != 2)
+
 traits <- df[, c("Elytra.length", "Elytra.width", "Pronotum.length", 
                  "Pronotum.width", "Head.length", "Eye.distance")]
 complete_cases <- complete.cases(traits)
@@ -114,11 +118,6 @@ df$Shape_PC2 <- NA
 # (Multiply PC1 by -1 so positive values = larger body size)
 df$Size_PC1[complete_cases] <- pca_result$x[, 1] * -1
 df$Shape_PC2[complete_cases] <- pca_result$x[, 2]
-
-# Removing outliers
-outliers <- subset(df, Shape_PC2 < -4)
-print(outliers[, c("Elytra.length", "Elytra.width", "Pronotum.length", 
-                   "Pronotum.width", "Head.length", "Eye.distance")])
 
 # Filters out any row where PC1 OR PC2 is more than 3.5 SDs from the mean
 df_filtered <- df %>%
@@ -166,7 +165,7 @@ concurvity(gam_model7, full = TRUE)
 gratia::draw(gam_model7)
 
 gam_model_spatial <- gam(Size_PC1 ~ Sex * Anthro_numeric + 
-                           s(X, Y, k = 11),              
+                           s(X, Y, k = 5),              
                          weights = Predicted.sex, 
                          family = gaussian(link="identity"),
                          data = df_filtered, 
@@ -174,49 +173,57 @@ gam_model_spatial <- gam(Size_PC1 ~ Sex * Anthro_numeric +
 
 summary(gam_model_spatial)
 gratia::draw(gam_model_spatial, select = "s(X,Y)")
+ggsave(
+  filename = "PC1.tiff", 
+  plot = gratia::draw(gam_model_spatial, select = "s(X,Y)"),                              
+  device = "tiff",                       
+  width = 8,                             
+  height = 6,                            
+  units = "in",                          
+  dpi = 600,                             
+  compression = "lzw"                    
+)
 
-# Graphical vizualization of gam_model7 #
+# Graphical vizualization of gam_model 6 and 7 #
 library(ggeffects)
 library(ggplot2)
-# 1. Predict using the new FACTOR variable
-predicted_shape <- ggpredict(gam_model7, terms = c("Anthro_numeric1", "Sex"))
 
-# 2. Trick ggplot into connecting the categories by making the prediction x-axis numeric again
-predicted_shape$x_num <- as.numeric(as.character(predicted_shape$x))
+# Predict using the new FACTOR variable
+predicted_shape <- ggpredict(gam_model6, terms = c("Anthro_numeric1", "Sex"))
+df_filtered$plot_x <- as.numeric(factor(df_filtered$Anthro_numeric1, levels = c(1, 3, 4)))
+predicted_shape$plot_x <- as.numeric(factor(predicted_shape$x, levels = c("1", "3", "4")))
 
-# 3. Create the plot
-pd <- position_dodge(width = 0.3)
+pd <- position_dodge(width = 0.2)
 d <- ggplot() +
-  # 1. RAW DATA
+  # RAW DATA (Now using plot_x)
   geom_jitter(data = df_filtered, 
-              aes(x = Anthro_numeric, y = Shape_PC2, color = Sex), 
+              aes(x = plot_x, y = Size_PC1, color = Sex), 
               width = 0.15, height = 0, 
               alpha = 0.15, size = 1, na.rm = TRUE) + 
   
-  # 2. ERROR BARS (Replaces the ugly ribbon!)
+  # ERROR BARS (Now using plot_x)
   geom_errorbar(data = predicted_shape, 
-                aes(x = x_num, ymin = conf.low, ymax = conf.high, color = group), 
+                aes(x = plot_x, ymin = conf.low, ymax = conf.high, color = group), 
                 width = 0.2, linewidth = 1, alpha = 0.8, position = pd) +
   geom_point(data = predicted_shape,
-             aes(x = x_num, y = predicted, color = group),
+             aes(x = plot_x, y = predicted, color = group),
              size = 3, 
              position = pd) +
   
-  # 3. PREDICTED TREND LINES
+  # PREDICTED TREND LINES (Now using plot_x)
   geom_line(data = predicted_shape, 
-            aes(x = x_num, y = predicted, color = group), 
+            aes(x = plot_x, y = predicted, color = group), 
             linewidth = 1.2, position = pd) +
   
-  # 4. CUSTOM X-AXIS LABELS
+  # CUSTOM X-AXIS LABELS
   scale_x_continuous(
-    breaks = c(1, 2, 3, 4), 
-    labels = c("Rural = 1", "Agrolandscape = 2", "Suburban = 3", "Urban = 4")
+    breaks = c(1, 2, 3), 
+    labels = c("Rural", "Suburban", "Urban")
   ) +
-  
   scale_color_manual(values = c("F" = "red", "M" = "blue")) + 
   labs(
     x = "Anthropogenic intensity",
-    y = "Body shape (PC2 score)",
+    y = "Body size (PC1 score)",
     color = "Sex"
   ) +
   theme_classic() +
@@ -224,11 +231,9 @@ d <- ggplot() +
     text = element_text(size = 14),
     legend.position = "right"
   )
-
 print(d)
-
 ggsave(
-  filename = "Body_shape_gam7.tiff", 
+  filename = "Body_size_gam6.tiff", 
   plot = d,                              
   device = "tiff",                       
   width = 8,                             
