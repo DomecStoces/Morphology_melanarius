@@ -303,7 +303,7 @@ rma_slope_shape <- as.numeric(rma_res_shape[rma_res_shape$Method == "RMA", "Slop
 plot_shape <- ggplot(df_rma_shape, aes(x = F, y = M)) +
   geom_point(size = 3, alpha = 0.7, color = "black") + 
   geom_abline(intercept = rma_int_shape, slope = rma_slope_shape, 
-              color = "grey70", linewidth = 1.2) + # The fitted RMA line
+              color = "grey70", linewidth = 1.2) +
   geom_abline(intercept = 0, slope = 1, 
               linetype = "dashed", color = "black", linewidth = 1) +
   labs(
