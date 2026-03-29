@@ -148,7 +148,7 @@ df_filtered <- df %>%
 
 # Model fits #
 gam_model6 <- gam(Size_PC1 ~ 
-                    Sex * Anthro_numeric + Habitat.type +
+                    Sex * Anthro_numeric1 + 
                     s(Region, bs = "re"), weights = Predicted.sex, family=gaussian(link="identity"),
                   data = df_filtered, method = "REML")
 summary(gam_model6)
@@ -157,7 +157,7 @@ concurvity(gam_model6, full = TRUE)
 gratia::draw(gam_model6)
 
 gam_model7 <- gam(Shape_PC2 ~ 
-                    Sex * Anthro_numeric + Habitat.type +
+                    Sex * Anthro_numeric1 + 
                     s(Region, bs = "re"), weights = Predicted.sex, family=gaussian(link="identity"),
                   data = df_filtered, method = "REML")
 summary(gam_model7)
@@ -166,7 +166,6 @@ concurvity(gam_model7, full = TRUE)
 gratia::draw(gam_model7)
 
 gam_model_spatial <- gam(Size_PC1 ~ Sex * Anthro_numeric + 
-                           Habitat.type + 
                            s(X, Y, k = 11),              
                          weights = Predicted.sex, 
                          family = gaussian(link="identity"),
@@ -179,45 +178,54 @@ gratia::draw(gam_model_spatial, select = "s(X,Y)")
 # Graphical vizualization of gam_model7 #
 library(ggeffects)
 library(ggplot2)
-predicted_shape <- ggpredict(gam_model7, terms = c("Anthro_numeric", "Sex"))
-d<-ggplot() +
-  # 1. raw data: Add jittered points from the original 'df'
+# 1. Predict using the new FACTOR variable
+predicted_shape <- ggpredict(gam_model7, terms = c("Anthro_numeric1", "Sex"))
+
+# 2. Trick ggplot into connecting the categories by making the prediction x-axis numeric again
+predicted_shape$x_num <- as.numeric(as.character(predicted_shape$x))
+
+# 3. Create the plot
+pd <- position_dodge(width = 0.3)
+d <- ggplot() +
+  # 1. RAW DATA
   geom_jitter(data = df_filtered, 
               aes(x = Anthro_numeric, y = Shape_PC2, color = Sex), 
               width = 0.15, height = 0, 
               alpha = 0.15, size = 1, na.rm = TRUE) + 
   
-  # 2. CONFIDENCE INTERVALS (Middle Layer)
-  geom_ribbon(data = predicted_shape, 
-              aes(x = x, ymin = conf.low, ymax = conf.high, fill = group), 
-              alpha = 0.3) +
+  # 2. ERROR BARS (Replaces the ugly ribbon!)
+  geom_errorbar(data = predicted_shape, 
+                aes(x = x_num, ymin = conf.low, ymax = conf.high, color = group), 
+                width = 0.2, linewidth = 1, alpha = 0.8, position = pd) +
+  geom_point(data = predicted_shape,
+             aes(x = x_num, y = predicted, color = group),
+             size = 3, 
+             position = pd) +
   
-  # 3. PREDICTED TREND LINES (Top Layer)
+  # 3. PREDICTED TREND LINES
   geom_line(data = predicted_shape, 
-            aes(x = x, y = predicted, color = group), 
-            linewidth = 1.2) +
+            aes(x = x_num, y = predicted, color = group), 
+            linewidth = 1.2, position = pd) +
   
-  # 4. CUSTOM X-AXIS LABELS (New addition here!)
+  # 4. CUSTOM X-AXIS LABELS
   scale_x_continuous(
     breaks = c(1, 2, 3, 4), 
     labels = c("Rural = 1", "Agrolandscape = 2", "Suburban = 3", "Urban = 4")
   ) +
   
-  # 5. COLORS & THEMING
   scale_color_manual(values = c("F" = "red", "M" = "blue")) + 
-  scale_fill_manual(values = c("F" = "red", "M" = "blue")) +
   labs(
-    x = "Anthropogenic gradient",
+    x = "Anthropogenic intensity",
     y = "Body shape (PC2 score)",
-    color = "Sex",
-    fill = "Sex"
+    color = "Sex"
   ) +
   theme_classic() +
   theme(
     text = element_text(size = 14),
     legend.position = "right"
   )
-d
+
+print(d)
 
 ggsave(
   filename = "Body_shape_gam7.tiff", 
