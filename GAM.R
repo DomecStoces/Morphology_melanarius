@@ -257,18 +257,26 @@ rma_slope_size <- as.numeric(rma_res_size[rma_res_size$Method == "RMA", "Slope"]
 plot_size <- ggplot(df_rma_pca, aes(x = F, y = M)) +
   geom_point(size = 3, alpha = 0.7, color = "black") + 
   geom_abline(intercept = rma_int_size, slope = rma_slope_size, 
-              color = "blue", linewidth = 1.2) + 
+              color = "grey70", linewidth = 1.2) + 
   geom_abline(intercept = 0, slope = 1, 
-              linetype = "dashed", color = "red", linewidth = 1) + 
-  labs(title = "Allometric Scaling of Body Size (PC1)",
-       subtitle = "Blue line = RMA regression; Red dashed line = 1:1 Isometry",
-       x = "Female Mean Size (PC1)",
-       y = "Male Mean Size (PC1)") +
+              linetype = "dashed", color = "black", linewidth = 1) + 
+  labs(
+       x = "Female mean size (PC1)",
+       y = "Male mean size (PC1)") +
   theme_classic(base_size = 14) +
   theme(plot.title = element_text(face = "bold"))
 
 print(plot_size)
-
+ggsave(
+  filename = "Size.tiff", 
+  plot = plot_size,                              
+  device = "tiff",                       
+  width = 8,                             
+  height = 6,                            
+  units = "in",                          
+  dpi = 600,                             
+  compression = "lzw"                    
+)
 # RMA II model on PCA shape component #
 df_rma_shape <- df_filtered %>%
   filter(!is.na(Sex), !is.na(Shape_PC2)) %>% 
@@ -295,14 +303,23 @@ rma_slope_shape <- as.numeric(rma_res_shape[rma_res_shape$Method == "RMA", "Slop
 plot_shape <- ggplot(df_rma_shape, aes(x = F, y = M)) +
   geom_point(size = 3, alpha = 0.7, color = "black") + 
   geom_abline(intercept = rma_int_shape, slope = rma_slope_shape, 
-              color = "blue", linewidth = 1.2) + # The fitted RMA line
+              color = "grey70", linewidth = 1.2) + # The fitted RMA line
   geom_abline(intercept = 0, slope = 1, 
-              linetype = "dashed", color = "red", linewidth = 1) + # The 1:1 Isometry line
-  labs(title = "Allometric Scaling of Body Shape (PC2)",
-       subtitle = "Blue line = RMA regression; Red dashed line = 1:1 Isometry",
-       x = "Female Mean Shape (PC2)",
-       y = "Male Mean Shape (PC2)") +
+              linetype = "dashed", color = "black", linewidth = 1) +
+  labs(
+       x = "Female mean shape (PC2)",
+       y = "Male mean shape (PC2)") +
   theme_classic(base_size = 14) +
   theme(plot.title = element_text(face = "bold"))
 
 print(plot_shape)
+ggsave(
+  filename = "Shape.tiff", 
+  plot = plot_shape,                              
+  device = "tiff",                       
+  width = 8,                             
+  height = 6,                            
+  units = "in",                          
+  dpi = 600,                             
+  compression = "lzw"                    
+)
