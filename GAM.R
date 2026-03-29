@@ -197,13 +197,10 @@ predicted_shape$plot_x <- as.numeric(factor(predicted_shape$x, levels = c("1", "
 
 pd <- position_dodge(width = 0.2)
 d <- ggplot() +
-  # RAW DATA (Now using plot_x)
   geom_jitter(data = df_filtered,
               aes(x = plot_x, y = Shape_PC2, color = Sex), 
               width = 0.15, height = 0, 
               alpha = 0.15, size = 1, na.rm = TRUE) + 
-  
-  # ERROR BARS (Now using plot_x)
   geom_errorbar(data = predicted_shape, 
                 aes(x = plot_x, ymin = conf.low, ymax = conf.high, color = group), 
                 width = 0.3, linewidth = 1.2, alpha = 0.8, position = pd) +
@@ -211,13 +208,9 @@ d <- ggplot() +
              aes(x = plot_x, y = predicted, color = group), shape=21, fill="white",
              size = 3.5, stroke=1.2, alpha = 0.8,
              position = pd) +
-  
-  # PREDICTED TREND LINES (Now using plot_x)
   geom_line(data = predicted_shape, 
             aes(x = plot_x, y = predicted, color = group), 
             linewidth = 1.2, position = pd) +
-  
-  # CUSTOM X-AXIS LABELS
   scale_x_continuous(
     breaks = c(1, 2, 3), 
     labels = c("Rural", "Suburban", "Urban")
