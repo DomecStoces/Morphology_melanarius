@@ -23,29 +23,6 @@ gam.check(gam_model2)
 concurvity(gam_model2, full = TRUE)
 gratia::draw(gam_model2)
 
-# Allometric scaling between sexes #
-library(lmodel2)
-library(dplyr)
-library(tidyr)
-df_rma <- df %>%
-  filter(!is.na(Sex), !is.na(Elytra.length)) %>% 
-  group_by(Region, Anthro_numeric, Sex) %>%
-  summarise(mean_elytra = mean(Elytra.length), .groups = "drop") %>%
-  pivot_wider(names_from = Sex, values_from = mean_elytra) %>%
-  drop_na(M, F) %>%
-  mutate(
-    log_male = log(M),
-    log_female = log(F)
-  )
-
-# RMA II model
-rma_model <- lmodel2(log_male ~ log_female, 
-                     data = df_rma, 
-                     range.y = "relative", 
-                     range.x = "relative", 
-                     nperm = 1000)
-print(rma_model)
-
 # When accounting for allometric scaling of body size, everything would be larger #
 # Include body size as covariate
 gam_model3 <- gam(Pronotum.length ~ 
@@ -80,6 +57,7 @@ gam.check(gam_model5)
 concurvity(gam_model5, full = TRUE)
 gratia::draw(gam_model5)
 
+df_filtered$Size_PC1 <- df_filtered$Size_PC1 * -1
 # Model fits for PCA Size_PC1 and Shape_PC2#
 gam_model6 <- gam(Size_PC1 ~ 
                     Sex * Anthro_numeric1 + 

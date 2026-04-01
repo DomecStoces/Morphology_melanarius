@@ -24,8 +24,9 @@ df$Shape_PC2 <- NA
 df$Size_PC1[complete_cases] <- pca_result$x[, 1] * -1
 df$Shape_PC2[complete_cases] <- pca_result$x[, 2]
 
-# Filters out any row where PC1 OR PC2 is more than 3.5 SDs from the mean
-df_filtered <- df %>%
+df_clean <- df %>%
+  mutate(Size_PC1 = Size_PC1 * -1) %>% 
+  # Filter out extreme outliers (> 3.5 SDs)
   filter(abs(as.numeric(scale(Size_PC1))) <= 3.5 & 
            abs(as.numeric(scale(Shape_PC2))) <= 3.5)
 
@@ -50,3 +51,26 @@ df_filtered <- df %>%
   filter(Size_PC1 >= lower_extreme_PC1 & Size_PC1 <= upper_extreme_PC1 &
            Shape_PC2 >= lower_extreme_PC2 & Shape_PC2 <= upper_extreme_PC2)
 
+
+# PCA graph vizualization #
+library(ggplot2)
+library(dplyr)
+
+# 1. Bind the PCA scores back to your clean dataframe
+# Note: Multiplying PC1 by -1 to match your inverted interpretation in the methods
+df_plot <- cbind(df[complete_cases & df$Anthro_numeric != 2, ], 
+                 PC1 = pca_result$x[,1] * -1, 
+                 PC2 = pca_result$x[,2])
+
+# 2. Plot colored by Anthropogenic levels (assuming the column is called 'Anthro_level')
+ggplot(df_plot, aes(x = PC1, y = PC2, color = as.factor(Anthro_numeric))) +
+  geom_point(alpha = 0.6, size = 2) +
+  stat_ellipse(level = 0.95) + # Adds confidence ellipses
+  theme_minimal() +
+  labs(title = "PCA of Morphometric Traits",
+       x = "PC1: Overall body size (44.8%)",
+       y = "PC2: Shape proportions (20.9%)",
+       color = "Anthropogenic level")
+
+# 3. If you want to plot by Sex instead (assuming column is called 'Sex')
+# Just change the `color = Sex` argument in the aes() function.

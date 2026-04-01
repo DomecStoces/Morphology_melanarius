@@ -1,4 +1,7 @@
 # RMA II model on PCA size component #
+library(lmodel2)
+library(dplyr)
+library(tidyr)
 # Do populations with larger females also have larger males?
 df_rma_pca <- df_filtered %>%
   filter(!is.na(Sex), !is.na(Size_PC1)) %>% 
