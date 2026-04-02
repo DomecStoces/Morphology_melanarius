@@ -1,5 +1,5 @@
 library(mgcv)
-
+library(gratia)
 # Environmental drivers - visualize whether the male and female size curves diverge or converge as you move from rural (1) to urban (4) #
 gam_model <- gam(log(Elytra.length) ~ Sex*Anthro_numeric + 
                    s(Region, bs = "re"), 
@@ -67,7 +67,7 @@ concurvity(gam_model6, full = TRUE)
 gratia::draw(gam_model6)
 appraise(gam_model6)
 
-gam_model7 <- gam(Shape_PC2 ~ 
+gam_model7 <- gam(Size_PC1 ~ 
                     Sex * Anthro_numeric1 + 
                     s(Region, bs = "re"), weights = Predicted.sex, family=gaussian(link="identity"),
                   data = df_filtered, method = "REML")
@@ -77,7 +77,7 @@ concurvity(gam_model7, full = TRUE)
 gratia::draw(gam_model7)
 appraise(gam_model7)
 
-gam_model_spatial <- gam(Size_PC1 ~ Sex * Anthro_numeric + 
+gam_model_spatial <- gam(Shape_PC2 ~ Sex * Anthro_numeric + 
                            s(X, Y, k = 5),              
                          weights = Predicted.sex, 
                          family = gaussian(link="identity"),
@@ -86,9 +86,13 @@ gam_model_spatial <- gam(Size_PC1 ~ Sex * Anthro_numeric +
 
 summary(gam_model_spatial)
 gratia::draw(gam_model_spatial, select = "s(X,Y)")
+spatial_plot <- draw(gam_model_spatial, select = "s(X,Y)") +
+  labs(x = "Longitude", 
+       y = "Latitude")
+print(spatial_plot)
 ggsave(
-  filename = "PC1.tiff", 
-  plot = gratia::draw(gam_model_spatial, select = "s(X,Y)"),                              
+  filename = "PC2.tiff", 
+  plot = spatial_plot,                              
   device = "tiff",                       
   width = 8,                             
   height = 6,                            
@@ -129,7 +133,7 @@ d <- ggplot() +
   scale_color_manual(values = c("F" = "red", "M" = "blue")) + 
   labs(
     x = "Anthropogenic intensity",
-    y = "Body shape (PC2 score)",
+    y = "Body size (PC1 score)",
     color = "Sex"
   ) +
   theme_classic() +

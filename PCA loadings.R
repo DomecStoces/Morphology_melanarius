@@ -48,12 +48,45 @@ df_plot <- cbind(df[complete_cases & df$Anthro_numeric != 2, ],
                  PC1 = pca_result$x[,1] * -1, 
                  PC2 = pca_result$x[,2])
 
-# 2. Plot colored by Anthropogenic levels (assuming the column is called 'Anthro_level')
-ggplot(df_plot, aes(x = PC1, y = PC2, color = as.factor(Anthro_numeric))) +
+# 2. Plot colored by Anthropogenic intensities
+de<-ggplot(df_plot, aes(x = PC1, y = PC2, color = as.factor(Anthro_numeric))) +
   geom_point(alpha = 0.6, size = 2) +
   stat_ellipse(level = 0.95) + 
+  scale_color_discrete(labels = c("1" = "Natural", "3" = "Suburban", "4" = "Urban")) +
   theme_minimal() +
-  labs(title = "PCA of Morphometric Traits",
-       x = "PC1: Body size (44.8%)",
-       y = "PC2: Body shape (20.9%)",
-       color = "Anthropogenic level")
+  labs(
+    x = "PC1: Body size (44.8%)",
+    y = "PC2: Body shape (20.9%)",
+    color = "Anthropogenic intensity"
+  )
+ggsave(
+  filename = "Anthropogenic.tiff", 
+  plot = de,                              
+  device = "tiff",                       
+  width = 8,                             
+  height = 6,                            
+  units = "in",                          
+  dpi = 600,                             
+  compression = "lzw"                    
+)
+dl<-ggplot(df_plot, aes(x = PC1, y = PC2, color = as.factor(Sex))) +
+  geom_point(alpha = 0.6, size = 2) +
+  stat_ellipse(level = 0.95) + 
+  scale_color_discrete(labels = c("F" = "Females", "M" = "Males")) +
+  theme_minimal() +
+  labs(
+    x = "PC1: Body size (44.8%)",
+    y = "PC2: Body shape (20.9%)",
+    color = "Sex"
+  )
+dl
+ggsave(
+  filename = "Anthropogenic.tiff", 
+  plot = dl,                              
+  device = "tiff",                       
+  width = 8,                             
+  height = 6,                            
+  units = "in",                          
+  dpi = 600,                             
+  compression = "lzw"                    
+)
