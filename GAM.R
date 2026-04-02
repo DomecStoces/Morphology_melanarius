@@ -102,14 +102,14 @@ library(ggeffects)
 library(ggplot2)
 
 # Predict using the new FACTOR variable
-predicted_shape <- ggpredict(gam_model6, terms = c("Anthro_numeric1", "Sex"))
+predicted_shape <- ggpredict(gam_model7, terms = c("Anthro_numeric1", "Sex"))
 df_filtered$plot_x <- as.numeric(factor(df_filtered$Anthro_numeric1, levels = c(1, 3, 4)))
 predicted_shape$plot_x <- as.numeric(factor(predicted_shape$x, levels = c("1", "3", "4")))
 
 pd <- position_dodge(width = 0.2)
 d <- ggplot() +
   geom_jitter(data = df_filtered,
-              aes(x = plot_x, y = Size_PC1, color = Sex), 
+              aes(x = plot_x, y = Shape_PC2, color = Sex), 
               width = 0.15, height = 0, 
               alpha = 0.15, size = 1, na.rm = TRUE) + 
   geom_errorbar(data = predicted_shape, 
