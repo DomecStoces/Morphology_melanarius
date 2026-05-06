@@ -1,4 +1,4 @@
-# Removing the Agrolandscape category (assuming Anthro_numeric == 2 is Agrolandscape)
+# Removing the Agrolandscape category
 df <- df %>%
   filter(Anthro_numeric != 2)
 
