@@ -3,7 +3,7 @@ library(stringr)
 library(dplyr)
 
 # Uploading file with data and setting factors
-df <- read_excel("dataset.xlsx", sheet = "P.melanarius")
+df <- read_excel("dataset.xlsx", sheet = "6_melanarius_data")
 df$Region <- as.factor(df$Region)
 df$Habitat.type <- as.factor(df$Habitat.type)
 df$Sex <- as.factor(df$Sex)

@@ -57,7 +57,7 @@ concurvity(gam_model5, full = TRUE)
 gratia::draw(gam_model5)
 
 # Model fits for PCA Size_PC1 and Shape_PC2#
-gam_model6 <- gam(Size_PC1 ~ 
+gam_model6 <- gam(Shape_PC2 ~ 
                     Sex * Anthro_numeric1 + 
                     s(Region, bs = "re"), weights = Predicted.sex, family=gaussian(link="identity"),
                   data = df_filtered, method = "REML")
@@ -128,11 +128,11 @@ d <- ggplot() +
             linewidth = 1.2, position = pd) +
   scale_x_continuous(
     breaks = c(1, 2, 3), 
-    labels = c("Natural", "Suburban", "Urban")
+    labels = c("Rural", "Suburban", "Urban")
   ) +
   scale_color_manual(values = c("F" = "red", "M" = "blue")) + 
   labs(
-    x = "Anthropogenic intensity",
+    x = "Urbanisation gradient",
     y = "Body size (PC1 score)",
     color = "Sex"
   ) +
@@ -143,7 +143,7 @@ d <- ggplot() +
   )
 print(d)
 ggsave(
-  filename = "Body_shape_gam7.tiff", 
+  filename = "Body_shape.tiff", 
   plot = d,                              
   device = "tiff",                       
   width = 8,                             

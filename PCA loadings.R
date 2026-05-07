@@ -57,7 +57,7 @@ de<-ggplot(df_plot, aes(x = PC1, y = PC2, color = as.factor(Anthro_numeric))) +
   labs(
     x = "PC1: Body size (44.8%)",
     y = "PC2: Body shape (20.9%)",
-    color = "Anthropogenic intensity"
+    color = "Urbanisation gradient"
   )
 ggsave(
   filename = "Anthropogenic.tiff", 
@@ -90,3 +90,4 @@ ggsave(
   dpi = 600,                             
   compression = "lzw"                    
 )
+
