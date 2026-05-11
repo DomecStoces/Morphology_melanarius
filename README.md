@@ -1,6 +1,6 @@
 # Morphology_melanarius
 
-This repository contains the R scripts and dataset used to analyze the morphological traits (body size, body shape, and allometry) of *melanarius* across an urbanization gradient. 
+This repository contains the R scripts and dataset used to analyze the morphological traits (body size, body shape, and allometry) of *Pterostichus melanarius* across an urbanization gradient. 
 
 The analytical pipeline processes morphometric data, performs Principal Component Analysis (PCA) to derive size and shape metrics, models responses to environmental drivers using Generalized Additive Models (GAMs), and evaluates sexual dimorphism using Reduced Major Axis (RMA) regression.
 
