@@ -52,7 +52,7 @@ df_plot <- cbind(df[complete_cases & df$Anthro_numeric != 2, ],
 de<-ggplot(df_plot, aes(x = PC1, y = PC2, color = as.factor(Anthro_numeric))) +
   geom_point(alpha = 0.6, size = 2) +
   stat_ellipse(level = 0.95) + 
-  scale_color_discrete(labels = c("1" = "Natural", "3" = "Suburban", "4" = "Urban")) +
+  scale_color_discrete(labels = c("1" = "Rural", "3" = "Suburban", "4" = "Urban")) +
   theme_minimal() +
   labs(
     x = "PC1: Body size (44.8%)",
