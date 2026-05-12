@@ -1,5 +1,7 @@
 library(mgcv)
 library(gratia)
+### Models for determining scaling along urbanisation gradient ###
+#####
 # Environmental drivers - visualize whether the male and female size curves diverge or converge as you move from rural (1) to urban (4) #
 gam_model <- gam(log(Elytra.length) ~ Sex*Anthro_numeric + 
                    s(Region, bs = "re"), 
@@ -55,8 +57,8 @@ summary(gam_model5)
 gam.check(gam_model5)
 concurvity(gam_model5, full = TRUE)
 gratia::draw(gam_model5)
-
-# Model fits for PCA Size_PC1 and Shape_PC2#
+#####
+### Model fits for PCA Size_PC1 and Shape_PC2 ###
 gam_model6 <- gam(Shape_PC2 ~ 
                     Sex * Anthro_numeric1 + 
                     s(Region, bs = "re"), weights = Predicted.sex, family=gaussian(link="identity"),
@@ -101,7 +103,7 @@ ggsave(
   compression = "lzw"                    
 )
 
-# Graphical vizualization of gam_model 6 and 7 #
+### Graphical vizualization of gam_model 6 and 7 ###
 library(ggeffects)
 library(ggplot2)
 
