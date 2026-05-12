@@ -65,7 +65,7 @@ coords_data <- df_filtered %>%
 map_data <- left_join(coords_data, str_data, by = "Region") %>%
   mutate(Total_Individuals = Rural + Suburban + Urban)
 world_map <- ne_countries(scale = "medium", returnclass = "sf")
-ggplot(data = world_map) +
+dd<-ggplot(data = world_map) +
   geom_sf(fill = "gray95", color = "gray60", size = 0.2) +
   geom_sf(data = sites_sf, aes(size = Total_Individuals, color = as.factor(Region)), 
           alpha = 0.8) +
@@ -82,3 +82,12 @@ ggplot(data = world_map) +
     y = "Latitude",
     size = "Sample size"
   )
+ggsave(
+  filename = "map_panel.pdf", 
+  plot = dd, 
+  device = "pdf",
+  width = 11,     
+  height = 7,   
+  units = "in",
+  colormodel = "srgb"
+)
